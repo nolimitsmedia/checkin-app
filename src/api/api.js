@@ -2,8 +2,7 @@ import axios from "axios";
 
 // ✅ Create Axios instance
 const api = axios.create({
-  // baseURL: "http://localhost:3001/api",
-  baseURL: "https://checkin-app-backend.onrender.com/api",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3001/api",
   withCredentials: false, // false for token-based auth
 });
 
