@@ -1,3 +1,5 @@
+console.log("API URL:", process.env.REACT_APP_API_URL);
+
 import {
   HashRouter as Router,
   Routes,
@@ -170,7 +172,5 @@ function App() {
     </Router>
   );
 }
-
-console.log("API URL:", process.env.REACT_APP_API_URL);
 
 export default App;
