@@ -1,0 +1,110 @@
+.reports-master {
+  padding: 2rem;
+  background: #f9fafb;
+  color: #111827;
+  max-width: 100%;
+  margin: auto;
+  border-radius: 15px;
+}
+
+.reports-master h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  color: #0f172a;
+}
+
+/* Table wrapper for horizontal scroll on desktop */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  margin: 2rem 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Desktop Table */
+.responsive-table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  background: #fff;
+}
+.responsive-table th,
+.responsive-table td {
+  padding: 12px 14px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 16px;
+}
+.responsive-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #475569;
+}
+.responsive-table tr:hover {
+  background: #f8fafc;
+}
+
+/* ----------- MOBILE: Stack rows as cards ---------- */
+@media (max-width: 700px) {
+  .responsive-table {
+    border: 0;
+    min-width: 100% !important;
+    width: 100% !important;
+  }
+  .responsive-table thead {
+    display: none;
+  }
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+  .responsive-table tr {
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    padding: 0.4rem 0.2rem;
+  }
+  .responsive-table td {
+    position: relative;
+    padding: 0.9rem 1rem 0.9rem 45%;
+    min-height: 42px;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 15px;
+    background: none;
+    vertical-align: middle;
+  }
+  .responsive-table td::before {
+    content: attr(data-label) ": ";
+    position: absolute;
+    left: 1rem;
+    top: 0.85rem;
+    width: 40%;
+    font-weight: 600;
+    font-size: 14px;
+    color: #4b5563;
+    white-space: nowrap;
+    text-align: left;
+    padding-right: 0.5rem;
+    letter-spacing: 0.5px;
+  }
+  .responsive-table td:last-child {
+    border-bottom: none;
+  }
+  /* Make main container full width on mobile */
+  .reports-master {
+    width: 100%;
+    padding: 0.75rem;
+  }
+}

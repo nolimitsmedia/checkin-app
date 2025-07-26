@@ -1,0 +1,46 @@
+.page-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px #eee;
+  padding: 24px;
+  margin: 30px 30px !important;
+}
+.checkin-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+.checkin-list-table th,
+.checkin-list-table td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+.role-badge {
+  background: #ede9fe;
+  color: #512da8;
+  font-size: 0.95em;
+  padding: 3px 10px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+.btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #e4e4e7;
+  cursor: pointer;
+}
+.btn-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 500;
+}
+.empty-list-box {
+  background: #fafafc;
+  padding: 30px 0;
+  border-radius: 12px;
+  margin-top: 20px;
+  color: #777;
+  text-align: center;
+}

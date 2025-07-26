@@ -1,0 +1,167 @@
+/* Dashboard summary */
+.summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.summary-item {
+  flex: 1 1 200px;
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.summary-item:hover {
+  transform: translateY(-5px);
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  animation: fadeIn 0.5s ease-in-out 0.2s;
+  animation-fill-mode: both;
+}
+
+.filters select {
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  transition: box-shadow 0.3s ease;
+}
+
+.filters select:focus {
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  animation: fadeIn 0.5s ease-in-out 0.4s;
+  animation-fill-mode: both;
+}
+
+thead {
+  background-color: #007bff;
+  color: white;
+}
+
+td,
+th {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+tr:nth-child(even) {
+  background-color: #f1f1f1;
+}
+
+tr:hover {
+  background-color: #e2f0ff;
+}
+
+/* Charts */
+.charts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 40px;
+  justify-content: space-around;
+  animation: fadeIn 0.5s ease-in-out 0.6s;
+  animation-fill-mode: both;
+}
+
+.chart-box {
+  flex: 1 1 300px;
+  max-width: 600px;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Accordion */
+.accordion {
+  margin-top: 30px;
+}
+
+.accordion h3 {
+  cursor: pointer;
+  background-color: #e9ecef;
+  padding: 12px;
+  margin: 0;
+  border: 1px solid #ccc;
+  transition: background-color 0.3s ease;
+}
+
+.accordion h3:hover {
+  background-color: #d6d8db;
+}
+
+.accordion-content {
+  padding: 12px;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  background-color: #fafafa;
+  animation: slideDown 0.3s ease;
+}
+
+/* Export Buttons */
+.export-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.export-buttons button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.export-buttons button:hover {
+  background-color: #0056b3;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 500px;
+    opacity: 1;
+  }
+}
