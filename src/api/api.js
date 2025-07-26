@@ -3,7 +3,7 @@ import axios from "axios";
 // ✅ Create Axios instance
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
-  withCredentials: false, // false for token-based auth
+  withCredentials: false,
 });
 
 // ✅ Attach token to request if present
