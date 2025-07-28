@@ -33,11 +33,14 @@ const MasterListPage = () => {
 
   useEffect(() => {
     const lower = search.toLowerCase();
-    const filtered = users.filter(
-      (user) =>
-        `${user.first_name} ${user.last_name}`.toLowerCase().includes(lower) ||
-        user.email.toLowerCase().includes(lower) ||
-        (user.phone && user.phone.toLowerCase().includes(lower))
+    const filtered = users.filter((user) =>
+      (
+        `${user.first_name || ""} ${user.last_name || ""}`.toLowerCase() +
+        " " +
+        (user.email ? user.email.toLowerCase() : "") +
+        " " +
+        (user.phone ? user.phone.toLowerCase() : "")
+      ).includes(lower)
     );
     setFilteredUsers(filtered);
     setCurrentPage(1);
@@ -113,6 +116,93 @@ const MasterListPage = () => {
         return found ? found.label : val;
       })
       .join(", ");
+  };
+
+  // --- MODERN/CONDENSED PAGINATION ---
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const pages = [];
+    // Always show first page
+    pages.push(
+      <button
+        key={1}
+        className={currentPage === 1 ? "active" : ""}
+        onClick={() => setCurrentPage(1)}
+        disabled={currentPage === 1}
+      >
+        1
+      </button>
+    );
+
+    // Show ellipsis if needed
+    if (currentPage > 4) {
+      pages.push(
+        <span key="start-ellipsis" className="ellipsis">
+          ...
+        </span>
+      );
+    }
+
+    // Show pages around current
+    for (
+      let i = Math.max(2, currentPage - 2);
+      i <= Math.min(totalPages - 1, currentPage + 2);
+      i++
+    ) {
+      if (i === 1 || i === totalPages) continue; // Already rendered
+      pages.push(
+        <button
+          key={i}
+          className={currentPage === i ? "active" : ""}
+          onClick={() => setCurrentPage(i)}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Show ellipsis if needed
+    if (currentPage < totalPages - 3) {
+      pages.push(
+        <span key="end-ellipsis" className="ellipsis">
+          ...
+        </span>
+      );
+    }
+
+    // Always show last page if more than 1
+    if (totalPages > 1) {
+      pages.push(
+        <button
+          key={totalPages}
+          className={currentPage === totalPages ? "active" : ""}
+          onClick={() => setCurrentPage(totalPages)}
+          disabled={currentPage === totalPages}
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    // Optionally add Prev/Next
+    return (
+      <>
+        <button
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+        >
+          Prev
+        </button>
+        {pages}
+        <button
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
+      </>
+    );
   };
 
   return (
@@ -208,17 +298,7 @@ const MasterListPage = () => {
         </table>
       </div>
 
-      <div className="pagination">
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i}
-            className={currentPage === i + 1 ? "active" : ""}
-            onClick={() => setCurrentPage(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+      <div className="pagination">{renderPagination()}</div>
 
       {modalOpen && selectedUser && (
         <Modal

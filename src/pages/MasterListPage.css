@@ -131,3 +131,18 @@ tr:hover {
   cursor: pointer;
   font-size: 10px;
 }
+
+.ellipsis {
+  display: inline-block;
+  width: 24px;
+  text-align: center;
+  color: #888;
+  font-weight: bold;
+  pointer-events: none;
+  background: none;
+  border: none;
+}
+
+.pagination button {
+  margin-right: 5px;
+}
