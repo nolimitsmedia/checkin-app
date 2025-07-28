@@ -56,7 +56,13 @@ const SidebarLayout = ({ children }) => {
         >
           <FaTimes /> <span>Close</span>
         </button>
-        <h2 className="logo">Mt Gilead Helps</h2>
+        <div className="sidebar-logo-container">
+          <img
+            src="/mtgilead.png"
+            alt="Mt. Gilead Logo"
+            className="sidebar-logo"
+          />
+        </div>
         <nav>
           {navItems.map((item) => (
             <Link
