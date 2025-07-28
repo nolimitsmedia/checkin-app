@@ -4,12 +4,12 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./CheckInList.css";
 
-function normalizeAvatar(avatar) {
-  if (!avatar) return "/default-profile.png";
-  if (avatar.startsWith("http")) return avatar;
-  if (avatar.startsWith("/uploads/")) return `http://localhost:3001${avatar}`;
-  return `http://localhost:3001/uploads/${avatar}`;
-}
+// function normalizeAvatar(avatar) {
+//   if (!avatar) return "/default-profile.png";
+//   if (avatar.startsWith("http")) return avatar;
+//   if (avatar.startsWith("/uploads/")) return `http://localhost:3001${avatar}`;
+//   return `http://localhost:3001/uploads/${avatar}`;
+// }
 
 function formatTime(datetime) {
   if (!datetime) return "";
@@ -98,7 +98,7 @@ export default function CheckInList() {
           <table className="checkin-list-table">
             <thead>
               <tr>
-                <th>Avatar</th>
+                {/* <th>Avatar</th> */}
                 <th>Name</th>
                 <th>Role</th>
                 <th>Event</th>
@@ -109,7 +109,7 @@ export default function CheckInList() {
             <tbody>
               {filtered.map((ci) => (
                 <tr key={ci.id}>
-                  <td>
+                  {/* <td>
                     <img
                       src={normalizeAvatar(ci.avatar)}
                       alt="avatar"
@@ -122,7 +122,7 @@ export default function CheckInList() {
                         background: "#eee",
                       }}
                     />
-                  </td>
+                  </td> */}
                   <td>
                     {ci.first_name} {ci.last_name}
                   </td>

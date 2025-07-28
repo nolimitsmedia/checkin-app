@@ -1,5 +1,3 @@
-console.log("API URL:", process.env.REACT_APP_API_URL);
-
 import {
   HashRouter as Router,
   Routes,
@@ -22,6 +20,8 @@ import EventListPage from "./pages/EventListPage";
 import CheckInList from "./pages/CheckInList";
 import ImportData from "./pages/ImportData";
 import Footer from "./components/Footer";
+
+console.log("API URL:", process.env.REACT_APP_API_URL);
 
 const AppRoutes = () => {
   const location = useLocation();

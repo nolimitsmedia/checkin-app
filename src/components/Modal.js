@@ -16,6 +16,14 @@ export const MINISTRY_OPTIONS = [
   { value: 8, label: "Music Ministry" },
 ];
 
+const GENDER_OPTIONS = [
+  { value: "", label: "Select..." },
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
+  { value: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
 const backdropVariants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1 },
@@ -29,8 +37,6 @@ const modalVariants = {
 export default function Modal({ open, user, onClose, onSave }) {
   const [draft, setDraft] = useState(user);
   const [selectedMinistries, setSelectedMinistries] = useState([]);
-  const [avatarPreview, setAvatarPreview] = useState("");
-
   // Family linking states
   const [families, setFamilies] = useState([]);
   const [familyQuery, setFamilyQuery] = useState("");
@@ -57,16 +63,6 @@ export default function Modal({ open, user, onClose, onSave }) {
         (opt) => parsed.includes(opt.value) || parsed.includes(opt.label)
       )
     );
-
-    // Avatar preview
-    if (user.avatar) {
-      const fullUrl = user.avatar.startsWith("http")
-        ? user.avatar
-        : `http://localhost:3001${user.avatar}`;
-      setAvatarPreview(fullUrl);
-    } else {
-      setAvatarPreview("");
-    }
 
     fetchFamilies();
     setFamilyId(user.family_id || null);
@@ -130,66 +126,25 @@ export default function Modal({ open, user, onClose, onSave }) {
   const handleChange = (field, value) =>
     setDraft((prev) => ({ ...prev, [field]: value }));
 
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("avatar", file);
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("You are not authorized.");
-      return;
-    }
-
-    let userId = draft.id || user.id;
-    if (typeof userId === "string" && userId.includes("-")) {
-      userId = userId.split("-")[1];
-    }
-    const type = draft.role === "elder" ? "elder" : "user";
-
-    try {
-      const res = await fetch(
-        `http://localhost:3001/api/uploads/avatar?userId=${userId}&type=${type}`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        }
-      );
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText);
-      }
-      const data = await res.json();
-      if (data?.url) {
-        const fullUrl = `http://localhost:3001${data.url}`;
-        setAvatarPreview(fullUrl);
-        setDraft((prev) => ({ ...prev, avatar: data.url }));
-        toast.success("✅ Avatar uploaded!");
-      } else {
-        toast.error("Upload failed.");
-      }
-    } catch (err) {
-      console.error("Upload error", err);
-      toast.error("Upload failed: " + err.message);
-    }
-  };
-
   // --- ON SAVE (CRITICAL SECTION) ---
   const handleSubmit = (e) => {
     e.preventDefault();
     const ministries = selectedMinistries.map((m) => m.value);
 
-    // Always send correct role and family_id as integer or null
+    // Always send correct role, family_id, gender, and active as boolean
+    const genderVal =
+      draft.gender === "" || draft.gender == null ? null : draft.gender;
+
     const payload = {
       ...draft,
       ministries,
       family_id: familyId ? parseInt(familyId) : null,
       role: draft.role || user.role,
-      avatar: draft.avatar, // always include the avatar after upload
+      gender: genderVal,
+      active:
+        draft.active === true || draft.active === "true" || draft.active === 1
+          ? true
+          : false,
     };
 
     onSave(payload);
@@ -255,6 +210,38 @@ export default function Modal({ open, user, onClose, onSave }) {
                   <option value="staff">staff</option>
                 </select>
               </label>
+              {/* --- Add Gender Selector --- */}
+              <label>
+                Gender
+                <select
+                  value={draft.gender || ""}
+                  onChange={(e) => handleChange("gender", e.target.value)}
+                >
+                  {GENDER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {/* --- Add Active/Inactive Status Selector --- */}
+              <label>
+                Status
+                <select
+                  value={
+                    draft.active === false || draft.active === "false"
+                      ? "false"
+                      : "true"
+                  }
+                  onChange={(e) =>
+                    handleChange("active", e.target.value === "true")
+                  }
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </label>
+              {/* --- End Active/Inactive Status Selector --- */}
               <label>
                 Ministries
                 <Select
@@ -264,26 +251,6 @@ export default function Modal({ open, user, onClose, onSave }) {
                   onChange={(selected) => setSelectedMinistries(selected || [])}
                   className="ministry-select"
                 />
-              </label>
-              <label>
-                Avatar
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                />
-                {avatarPreview && (
-                  <img
-                    src={avatarPreview}
-                    alt="Avatar Preview"
-                    style={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: "50%",
-                      marginTop: 8,
-                    }}
-                  />
-                )}
               </label>
 
               {/* --- Household / Family Section (Autocomplete + Add) --- */}

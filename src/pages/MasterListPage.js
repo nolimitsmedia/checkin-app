@@ -3,6 +3,11 @@ import api from "../api/api";
 import Modal, { MINISTRY_OPTIONS } from "../components/Modal";
 import "./MasterListPage.css";
 
+// Helper function to handle booleans and strings from backend
+function isUserActive(user) {
+  return user.active === true || user.active === "true";
+}
+
 const MasterListPage = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -66,19 +71,19 @@ const MasterListPage = () => {
     setSelectedUser(null);
   };
 
-  // FIX: Only send ministry IDs (or codes), not names
+  // Updated: Save with active included!
   const handleSave = async (updatedUser) => {
     try {
-      // updatedUser.ministries is now an array of IDs (or codes)
       const payload = {
         id: updatedUser.id,
         first_name: updatedUser.first_name,
         last_name: updatedUser.last_name,
         email: updatedUser.email,
         role: updatedUser.role,
-        ministry_ids: updatedUser.ministries, // Now an array of IDs or codes!
+        ministry_ids: updatedUser.ministries,
+        active: updatedUser.active, // <--- Ensure active is included!
         avatar: updatedUser.avatar,
-        family_id: updatedUser.family_id || null, // <--- include family_id here!
+        family_id: updatedUser.family_id || null,
       };
 
       await api.put(`/users/${updatedUser.id}`, payload);
@@ -135,55 +140,60 @@ const MasterListPage = () => {
         <table className="styled-table">
           <thead>
             <tr>
-              <th>Avatar</th>
               <th>Name</th>
+              <th>Gender</th>
               <th>Email</th>
               <th>Role</th>
               <th>Ministry</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedUsers.map((user) => (
-              <tr key={`${user.id}-${user.email}`}>
-                <td data-label="Avatar">
-                  <img
-                    src={
-                      user.avatar?.startsWith("/uploads/")
-                        ? `http://localhost:3001${user.avatar}`
-                        : `http://localhost:3001/uploads/default-avatar.jpg`
-                    }
-                    alt="avatar"
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      objectFit: "cover",
-                      borderRadius: "50%",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                </td>
-                <td data-label="Name">
-                  {user.first_name} {user.last_name}
-                </td>
-                <td data-label="Email">{user.email}</td>
-                <td data-label="Role">{user.role}</td>
-                <td data-label="Ministry">
-                  {renderMinistryLabels(user.ministries)}
-                </td>
-                <td data-label="Actions">
-                  <button onClick={() => handleEdit(user)} className="edit-btn">
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="delete-btn"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {paginatedUsers.map((user) => {
+              const active = isUserActive(user);
+              return (
+                <tr key={`${user.id}-${user.email}`}>
+                  <td data-label="Name">
+                    {user.first_name} {user.last_name}
+                  </td>
+                  <td data-label="Gender">{user.gender || "-"}</td>
+                  <td data-label="Email">{user.email}</td>
+                  <td data-label="Role">{user.role}</td>
+                  <td data-label="Ministry">
+                    {renderMinistryLabels(user.ministries)}
+                  </td>
+                  <td data-label="Active">
+                    <span
+                      style={{
+                        padding: "4px 12px",
+                        borderRadius: "12px",
+                        background: active ? "#d1f5e1" : "#f8d7da",
+                        color: active ? "#1b8e3e" : "#a94442",
+                        fontWeight: "bold",
+                        fontSize: "0.9em",
+                      }}
+                    >
+                      {active ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td data-label="Actions">
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="edit-btn"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user.id)}
+                      className="delete-btn"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
             {paginatedUsers.length === 0 && (
               <tr>
                 <td

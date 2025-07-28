@@ -52,10 +52,10 @@ function AddUser() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    setAvatarFile(file);
-  };
+  // const handleAvatarChange = (e) => {
+  //   const file = e.target.files[0];
+  //   setAvatarFile(file);
+  // };
 
   const handleAddFamily = async () => {
     if (!newFamilyName.trim()) {
@@ -178,10 +178,10 @@ function AddUser() {
             <option value="staff">Staff</option>
           </select>
         </div>
-        <div className="input-group">
+        {/* <div className="input-group">
           <label>Upload Avatar</label>
           <input type="file" accept="image/*" onChange={handleAvatarChange} />
-        </div>
+        </div> */}
         {/* --- Household Section Autocomplete --- */}
 
         <div className="input-group">

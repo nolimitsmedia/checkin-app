@@ -5,12 +5,12 @@ import "react-toastify/dist/ReactToastify.css";
 import "./FormStyles.css";
 
 // Helper: Avatar image URL
-function normalizeAvatar(avatar) {
-  if (!avatar) return "/default-profile.png";
-  if (avatar.startsWith("http")) return avatar;
-  if (avatar.startsWith("/uploads/")) return `http://localhost:3001${avatar}`;
-  return `http://localhost:3001/uploads/${avatar}`;
-}
+// function normalizeAvatar(avatar) {
+//   if (!avatar) return "/default-profile.png";
+//   if (avatar.startsWith("http")) return avatar;
+//   if (avatar.startsWith("/uploads/")) return `http://localhost:3001${avatar}`;
+//   return `http://localhost:3001/uploads/${avatar}`;
+// }
 
 function formatTime12h(dt) {
   if (!dt) return "";
@@ -287,7 +287,7 @@ export default function CheckInName() {
                         );
                       }}
                     />
-                    <img
+                    {/* <img
                       src={normalizeAvatar(user.avatar)}
                       alt="avatar"
                       className="user-avatar"
@@ -299,7 +299,7 @@ export default function CheckInName() {
                         margin: "0 12px",
                         background: "#f7f7fb",
                       }}
-                    />
+                    /> */}
                     <div className="user-info">
                       <strong>
                         {user.first_name} {user.last_name}
