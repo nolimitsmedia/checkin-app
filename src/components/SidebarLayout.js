@@ -58,9 +58,9 @@ const SidebarLayout = ({ children }) => {
         </button>
         <div className="sidebar-logo-container">
           <img
-            src="/mtgilead.png"
+            src={`${process.env.PUBLIC_URL}/mtgilead.png`}
             alt="Mt. Gilead Logo"
-            className="sidebar-logo"
+            className="logo"
           />
         </div>
         <nav>
