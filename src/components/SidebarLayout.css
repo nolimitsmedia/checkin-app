@@ -62,7 +62,7 @@
   background: none;
   border: none;
   color: white;
-  font-size: 1.2rem;
+  font-size: 16px;
   cursor: pointer;
   z-index: 1001;
   margin-bottom: 20px;
@@ -146,7 +146,7 @@
 .toggle-sidebar-btn {
   background: #8c23b3;
   border: none;
-  font-size: 1.2rem;
+  font-size: 16px;
   cursor: pointer;
   color: white;
   border-radius: 6px;
@@ -276,6 +276,7 @@ body {
     position: absolute;
     top: 1rem;
     left: 1rem;
+    font-size: 16px;
   }
 }
 

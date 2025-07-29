@@ -14,7 +14,7 @@ export default function Footer() {
         zIndex: -1,
       }}
     >
-      © {new Date().getFullYear()} No Limits Media LLc. All Rights Reserved.
+      © {new Date().getFullYear()} No Limits Media LLC. All Rights Reserved.
     </footer>
   );
 }

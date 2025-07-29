@@ -44,3 +44,52 @@
   color: #777;
   text-align: center;
 }
+
+/* Confirmation Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  z-index: 2000;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(32, 32, 32, 0.23);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 13px;
+  padding: 28px 32px 20px;
+  min-width: 320px;
+  box-shadow: 0 7px 40px rgba(0, 0, 0, 0.17);
+  text-align: center;
+}
+.modal-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+.btn.btn-secondary {
+  background: #e4e6eb;
+  border: none;
+  color: #333;
+  padding: 8px 18px;
+  border-radius: 7px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn.btn-danger {
+  background: #f86a82;
+  border: none;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 7px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn[disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+}
