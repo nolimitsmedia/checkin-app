@@ -14,6 +14,8 @@ export const MINISTRY_OPTIONS = [
   { value: 6, label: "Mens and Womens Ministries" },
   { value: 7, label: "Ushering" },
   { value: 8, label: "Music Ministry" },
+  { value: 9, label: "Overseers" },
+  { value: 10, label: "Staff" },
 ];
 
 const GENDER_OPTIONS = [
@@ -51,17 +53,29 @@ export default function Modal({ open, user, onClose, onSave }) {
 
     let parsed = [];
     if (Array.isArray(user.ministries)) {
-      parsed = user.ministries;
+      parsed = user.ministries.map((m) =>
+        typeof m === "object" && m.value
+          ? m.value
+          : typeof m === "object" && m.id
+          ? m.id
+          : typeof m === "number"
+          ? m
+          : MINISTRY_OPTIONS.find((opt) => opt.label === m)?.value || m
+      );
     } else if (typeof user.ministries === "string") {
       parsed = user.ministries
         .split(",")
-        .map((m) => m.trim())
+        .map((m) => {
+          const num = parseInt(m, 10);
+          return isNaN(num)
+            ? MINISTRY_OPTIONS.find((opt) => opt.label === m.trim())?.value ||
+                m.trim()
+            : num;
+        })
         .filter(Boolean);
     }
     setSelectedMinistries(
-      MINISTRY_OPTIONS.filter(
-        (opt) => parsed.includes(opt.value) || parsed.includes(opt.label)
-      )
+      MINISTRY_OPTIONS.filter((opt) => parsed.includes(opt.value))
     );
 
     fetchFamilies();
@@ -74,6 +88,7 @@ export default function Modal({ open, user, onClose, onSave }) {
     }
     setAddingNewFamily(false);
     setNewFamilyName("");
+    // eslint-disable-next-line
   }, [user]);
 
   // --- FAMILY AUTOCOMPLETE LOGIC ---
@@ -129,17 +144,18 @@ export default function Modal({ open, user, onClose, onSave }) {
   // --- ON SAVE (CRITICAL SECTION) ---
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Always send ministries as an array of IDs
     const ministries = selectedMinistries.map((m) => m.value);
 
-    // Always send correct role, family_id, gender, and active as boolean
     const genderVal =
-      draft.gender === "" || draft.gender == null ? null : draft.gender;
+      draft.gender && draft.gender !== "" ? draft.gender : user.gender;
+    const roleVal = draft.role && draft.role !== "" ? draft.role : user.role;
 
     const payload = {
       ...draft,
       ministries,
       family_id: familyId ? parseInt(familyId) : null,
-      role: draft.role || user.role,
+      role: roleVal,
       gender: genderVal,
       active:
         draft.active === true || draft.active === "true" || draft.active === 1
@@ -201,20 +217,21 @@ export default function Modal({ open, user, onClose, onSave }) {
               <label>
                 Role
                 <select
-                  value={draft.role || "member"}
+                  value={draft.role || user.role || "member"}
                   onChange={(e) => handleChange("role", e.target.value)}
                 >
-                  <option value="member">member</option>
-                  <option value="volunteer">volunteer</option>
-                  <option value="elder">elder</option>
-                  <option value="staff">staff</option>
+                  <option value="member">Member</option>
+                  <option value="volunteer">Volunteer</option>
+                  <option value="elder">Elder</option>
+                  <option value="visitor">Visitor</option>
+                  <option value="staff">Staff</option>
                 </select>
               </label>
               {/* --- Add Gender Selector --- */}
               <label>
                 Gender
                 <select
-                  value={draft.gender || ""}
+                  value={draft.gender || user.gender || ""}
                   onChange={(e) => handleChange("gender", e.target.value)}
                 >
                   {GENDER_OPTIONS.map((opt) => (

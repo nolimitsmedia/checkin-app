@@ -4,10 +4,14 @@ import { CSVLink } from "react-csv";
 import { FaSortUp, FaSortDown } from "react-icons/fa";
 import "./ReportsMaster.css";
 
+// Change these IDs/names to match your actual database records
+const OVERSEER_MINISTRY_NAME = "Overseers";
+const STAFF_MINISTRY_NAME = "Staff";
+
+// Helper: join first and last name
 const combineName = (row) =>
   [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || "—";
 
-// Remove these columns from all reports
 const REMOVE_KEYS = [
   "user_id",
   "ministry_id",
@@ -15,6 +19,7 @@ const REMOVE_KEYS = [
   "type",
   "elder_id",
   "event_id",
+  "checkin_id",
 ];
 
 const ReportsMaster = () => {
@@ -24,10 +29,15 @@ const ReportsMaster = () => {
   const [elderId, setElderId] = useState("");
   const [events, setEvents] = useState([]);
   const [elders, setElders] = useState([]);
+  const [ministries, setMinistries] = useState([]);
+  const [ministryId, setMinistryId] = useState("");
+  const [overseerMinistryId, setOverseerMinistryId] = useState("");
+  const [staffMinistryId, setStaffMinistryId] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
 
   const role = localStorage.getItem("adminRole");
 
+  // Fetch events, elders, ministries
   useEffect(() => {
     if (role !== "super_admin" && role !== "admin") return;
     const fetchOptions = async () => {
@@ -36,8 +46,20 @@ const ReportsMaster = () => {
         setEvents(eventRes.data);
         const elderRes = await api.get("/users/elders");
         setElders(elderRes.data);
+        const minRes = await api.get("/ministries");
+        setMinistries(minRes.data);
+
+        // Find special ministry IDs by name
+        const overseerMinistry = minRes.data.find((m) =>
+          m.name.toLowerCase().includes(OVERSEER_MINISTRY_NAME.toLowerCase())
+        );
+        const staffMinistry = minRes.data.find((m) =>
+          m.name.toLowerCase().includes(STAFF_MINISTRY_NAME.toLowerCase())
+        );
+        setOverseerMinistryId(overseerMinistry ? overseerMinistry.id : "");
+        setStaffMinistryId(staffMinistry ? staffMinistry.id : "");
       } catch (err) {
-        console.error("Error loading events or elders:", err);
+        console.error("Error loading events, elders, or ministries:", err);
       }
     };
     fetchOptions();
@@ -50,6 +72,27 @@ const ReportsMaster = () => {
         switch (reportType) {
           case "attendees":
             res = await api.get("/reports/attendees");
+            break;
+          case "overseer-attendance":
+            if (overseerMinistryId) {
+              let url = `/reports/ministry-attendance/${overseerMinistryId}`;
+              if (eventId) url += `?event_id=${eventId}`;
+              res = await api.get(url);
+            }
+            break;
+          case "staff-attendance":
+            if (staffMinistryId) {
+              let url = `/reports/ministry-attendance/${staffMinistryId}`;
+              if (eventId) url += `?event_id=${eventId}`;
+              res = await api.get(url);
+            }
+            break;
+          case "ministry-attendance":
+            if (ministryId) {
+              let url = `/reports/ministry-attendance/${ministryId}`;
+              if (eventId) url += `?event_id=${eventId}`;
+              res = await api.get(url);
+            }
             break;
           case "ministry-absent":
             if (eventId)
@@ -68,14 +111,23 @@ const ReportsMaster = () => {
             return;
         }
         if (res) setData(res.data);
+        else setData([]);
       } catch (err) {
         console.error("Report fetch error:", err);
+        setData([]);
       }
     };
     fetchReport();
-  }, [reportType, eventId, elderId]);
+  }, [
+    reportType,
+    eventId,
+    elderId,
+    ministryId,
+    overseerMinistryId,
+    staffMinistryId,
+  ]);
 
-  // Prepare visible columns, combine name, remove unwanted
+  // Prepare visible columns
   const columns =
     data.length > 0
       ? [
@@ -144,16 +196,56 @@ const ReportsMaster = () => {
       {/* Filters */}
       <div className="report-filters">
         <select
-          onChange={(e) => setReportType(e.target.value)}
+          onChange={(e) => {
+            setReportType(e.target.value);
+            setEventId("");
+            setElderId("");
+            setMinistryId("");
+            setData([]);
+          }}
           value={reportType}
         >
           <option value="attendees">Full Attendee Report</option>
+          <option value="overseer-attendance">
+            Overseer Attendance Report
+          </option>
+          <option value="staff-attendance">Staff Attendance Report</option>
+          <option value="ministry-attendance">
+            Other Ministry Attendance Report
+          </option>
           <option value="ministry-absent">Ministry Absent Report</option>
           <option value="elder">Elder Report</option>
           <option value="elder-absent">Elder Absent Report</option>
         </select>
-        {(reportType === "ministry-absent" ||
-          reportType === "elder-absent") && (
+
+        {(reportType === "overseer-attendance" ||
+          reportType === "staff-attendance" ||
+          reportType === "ministry-attendance") && (
+          <select value={eventId} onChange={(e) => setEventId(e.target.value)}>
+            <option value="">All Events</option>
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.title} ({new Date(e.event_date).toLocaleDateString("en-US")})
+              </option>
+            ))}
+          </select>
+        )}
+
+        {reportType === "ministry-attendance" && (
+          <select
+            value={ministryId}
+            onChange={(e) => setMinistryId(e.target.value)}
+          >
+            <option value="">Select Ministry</option>
+            {ministries.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {reportType === "ministry-absent" && (
           <select value={eventId} onChange={(e) => setEventId(e.target.value)}>
             <option value="">Select Event</option>
             {events.map((e) => (
@@ -173,7 +265,18 @@ const ReportsMaster = () => {
             ))}
           </select>
         )}
+        {reportType === "elder-absent" && (
+          <select value={eventId} onChange={(e) => setEventId(e.target.value)}>
+            <option value="">Select Event</option>
+            {events.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.title} ({new Date(e.event_date).toLocaleDateString("en-US")})
+              </option>
+            ))}
+          </select>
+        )}
       </div>
+
       <div className="report-table-container">
         {processedData.length === 0 ? (
           <p>No data available</p>
@@ -210,7 +313,7 @@ const ReportsMaster = () => {
                     <tr key={i}>
                       {columns.map((key, j) => (
                         <td key={j}>
-                          {key.toLowerCase().includes("date")
+                          {key.toLowerCase().includes("date") && row[key]
                             ? new Date(row[key]).toLocaleDateString("en-US")
                             : row[key]}
                         </td>

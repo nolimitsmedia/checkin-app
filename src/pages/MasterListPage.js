@@ -3,9 +3,9 @@ import api from "../api/api";
 import Modal, { MINISTRY_OPTIONS } from "../components/Modal";
 import "./MasterListPage.css";
 
-// Helper function to handle booleans and strings from backend
+// Helper function for booleans and strings from backend
 function isUserActive(user) {
-  return user.active === true || user.active === "true";
+  return user.active === true || user.active === "true" || user.active === 1;
 }
 
 const MasterListPage = () => {
@@ -74,17 +74,32 @@ const MasterListPage = () => {
     setSelectedUser(null);
   };
 
-  // Updated: Save with active included!
+  // -- FIX: Safe and normalized payload
   const handleSave = async (updatedUser) => {
     try {
+      // Defensive: Always ensure ministries is an array (never undefined/null)
+      let ministries =
+        Array.isArray(updatedUser.ministries) && updatedUser.ministries.length
+          ? updatedUser.ministries
+          : [];
+      // Some react-select edge-cases can send array of objects, so normalize
+      ministries = ministries.map((m) =>
+        typeof m === "object" && m !== null ? m.value || m.id || m.label : m
+      );
+      // Remove null/undefined/empty
+      ministries = ministries.filter(
+        (v) => v !== null && v !== undefined && v !== ""
+      );
+
       const payload = {
         id: updatedUser.id,
         first_name: updatedUser.first_name,
         last_name: updatedUser.last_name,
         email: updatedUser.email,
-        role: updatedUser.role,
-        ministry_ids: updatedUser.ministries,
-        active: updatedUser.active, // <--- Ensure active is included!
+        role: updatedUser.role || "member",
+        gender: updatedUser.gender || null,
+        ministry_ids: ministries,
+        active: updatedUser.active,
         avatar: updatedUser.avatar,
         family_id: updatedUser.family_id || null,
       };
@@ -93,7 +108,8 @@ const MasterListPage = () => {
       await fetchUsers();
       handleModalClose();
     } catch (err) {
-      console.error("Update error:", err);
+      console.error("Update error:", err?.response?.data || err.message || err);
+      alert("Error updating user. See console for details.");
     }
   };
 
@@ -104,12 +120,26 @@ const MasterListPage = () => {
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  // Show ministries as their labels
+  // Show ministries as their labels (supports array of IDs, objects, or string names)
   const renderMinistryLabels = (ministries) => {
-    if (!ministries || !ministries.length) return "-";
-    // Ministries may be array of IDs, codes, or labels (for legacy users)
+    if (!ministries || ministries.length === 0) return "-";
     return ministries
       .map((val) => {
+        // If object with label/id/value
+        if (typeof val === "object" && val !== null) {
+          if (val.label) return val.label;
+          if (val.value) {
+            const found = MINISTRY_OPTIONS.find(
+              (opt) => opt.value === val.value
+            );
+            return found ? found.label : val.value;
+          }
+          if (val.id) {
+            const found = MINISTRY_OPTIONS.find((opt) => opt.value === val.id);
+            return found ? found.label : val.id;
+          }
+        }
+        // If number or string
         const found = MINISTRY_OPTIONS.find(
           (opt) => opt.value === val || opt.label === val
         );
@@ -123,7 +153,6 @@ const MasterListPage = () => {
     if (totalPages <= 1) return null;
 
     const pages = [];
-    // Always show first page
     pages.push(
       <button
         key={1}
@@ -134,8 +163,6 @@ const MasterListPage = () => {
         1
       </button>
     );
-
-    // Show ellipsis if needed
     if (currentPage > 4) {
       pages.push(
         <span key="start-ellipsis" className="ellipsis">
@@ -143,14 +170,12 @@ const MasterListPage = () => {
         </span>
       );
     }
-
-    // Show pages around current
     for (
       let i = Math.max(2, currentPage - 2);
       i <= Math.min(totalPages - 1, currentPage + 2);
       i++
     ) {
-      if (i === 1 || i === totalPages) continue; // Already rendered
+      if (i === 1 || i === totalPages) continue;
       pages.push(
         <button
           key={i}
@@ -161,8 +186,6 @@ const MasterListPage = () => {
         </button>
       );
     }
-
-    // Show ellipsis if needed
     if (currentPage < totalPages - 3) {
       pages.push(
         <span key="end-ellipsis" className="ellipsis">
@@ -170,8 +193,6 @@ const MasterListPage = () => {
         </span>
       );
     }
-
-    // Always show last page if more than 1
     if (totalPages > 1) {
       pages.push(
         <button
@@ -184,8 +205,6 @@ const MasterListPage = () => {
         </button>
       );
     }
-
-    // Optionally add Prev/Next
     return (
       <>
         <button
@@ -247,9 +266,13 @@ const MasterListPage = () => {
                   <td data-label="Name">
                     {user.first_name} {user.last_name}
                   </td>
-                  <td data-label="Gender">{user.gender || "-"}</td>
+                  <td data-label="Gender" className="gender">
+                    {user.gender || "-"}
+                  </td>
                   <td data-label="Email">{user.email}</td>
-                  <td data-label="Role">{user.role}</td>
+                  <td data-label="Role" className="role">
+                    {user.role || "-"}
+                  </td>
                   <td data-label="Ministry">
                     {renderMinistryLabels(user.ministries)}
                   </td>
@@ -287,7 +310,7 @@ const MasterListPage = () => {
             {paginatedUsers.length === 0 && (
               <tr>
                 <td
-                  colSpan="6"
+                  colSpan="7"
                   style={{ textAlign: "center", padding: "1rem" }}
                 >
                   No users found.

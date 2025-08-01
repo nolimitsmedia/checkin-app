@@ -11,6 +11,8 @@ const initialState = {
   phone: "",
   role: "member",
   avatar: null,
+  username: "", // NEW for admin
+  password: "", // NEW for admin
 };
 
 function AddUser() {
@@ -52,11 +54,6 @@ function AddUser() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // const handleAvatarChange = (e) => {
-  //   const file = e.target.files[0];
-  //   setAvatarFile(file);
-  // };
-
   const handleAddFamily = async () => {
     if (!newFamilyName.trim()) {
       toast.error("Please enter a family name.");
@@ -81,40 +78,43 @@ function AddUser() {
     let avatarUrl = "";
 
     try {
-      if (avatarFile) {
-        const form = new FormData();
-        form.append("avatar", avatarFile);
-        const res = await fetch(
-          `http://localhost:3001/api/uploads/avatar?type=user`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-            },
-            body: form,
-          }
-        );
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Upload failed");
-        avatarUrl = data.url;
+      // Handle avatar upload if needed
+
+      if (formData.role === "admin") {
+        if (!formData.username || !formData.password) {
+          toast.error("Username and password required for Admin.");
+          setLoading(false);
+          return;
+        }
+        // Save admin
+        await api.post("/admins", {
+          username: formData.username,
+          password: formData.password,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
+          phone: formData.phone,
+          family_id: familyId || null,
+        });
+        toast.success("Admin added!");
+      } else {
+        // Save regular user/elder/staff/etc
+        const payload = {
+          ...formData,
+          avatar: avatarUrl || null,
+          family_id: familyId || null,
+        };
+        await api.post("/users", payload);
+        toast.success("User added!");
       }
 
-      const payload = {
-        ...formData,
-        avatar: avatarUrl || null,
-        family_id: familyId || null,
-      };
-
-      await api.post("/users", payload);
-
-      toast.success("User added!");
       setFormData(initialState);
       setAvatarFile(null);
       setFamilyId("");
       setFamilyQuery("");
       setFamilyMembers([]);
     } catch (err) {
-      toast.error("Failed to add user.");
+      toast.error("Failed to add user/admin.");
     }
     setLoading(false);
   };
@@ -176,14 +176,38 @@ function AddUser() {
             <option value="volunteer">Volunteer</option>
             <option value="elder">Elder</option>
             <option value="staff">Staff</option>
+            <option value="admin">Admin</option> {/* NEW */}
           </select>
         </div>
-        {/* <div className="input-group">
-          <label>Upload Avatar</label>
-          <input type="file" accept="image/*" onChange={handleAvatarChange} />
-        </div> */}
-        {/* --- Household Section Autocomplete --- */}
 
+        {/* Show username/password only for admin */}
+        {formData.role === "admin" && (
+          <>
+            <div className="input-group">
+              <label>Username</label>
+              <input
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                required={formData.role === "admin"}
+                autoComplete="username"
+              />
+            </div>
+            <div className="input-group">
+              <label>Password</label>
+              <input
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                required={formData.role === "admin"}
+                autoComplete="new-password"
+              />
+            </div>
+          </>
+        )}
+
+        {/* --- Household Section Autocomplete --- */}
         <div className="input-group">
           <label>Household / Family</label>
           {!addingNewFamily ? (
@@ -196,7 +220,7 @@ function AddUser() {
                 onChange={(e) => {
                   setFamilyQuery(e.target.value);
                   setShowFamilyDropdown(true);
-                  setFamilyId(""); // reset familyId until picked
+                  setFamilyId("");
                 }}
                 onFocus={() => setShowFamilyDropdown(true)}
                 onBlur={() =>
@@ -283,7 +307,6 @@ function AddUser() {
           )}
         </div>
 
-        {/* Show members of selected family */}
         {familyId && familyMembers.length > 0 && (
           <div
             style={{
