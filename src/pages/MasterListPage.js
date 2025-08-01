@@ -74,7 +74,7 @@ const MasterListPage = () => {
     setSelectedUser(null);
   };
 
-  // -- FIX: Safe and normalized payload
+  // -- Safe and normalized payload for update
   const handleSave = async (updatedUser) => {
     try {
       // Defensive: Always ensure ministries is an array (never undefined/null)
@@ -82,11 +82,11 @@ const MasterListPage = () => {
         Array.isArray(updatedUser.ministries) && updatedUser.ministries.length
           ? updatedUser.ministries
           : [];
-      // Some react-select edge-cases can send array of objects, so normalize
+      // Normalize react-select edge-cases: array of objects or strings
       ministries = ministries.map((m) =>
         typeof m === "object" && m !== null ? m.value || m.id || m.label : m
       );
-      // Remove null/undefined/empty
+      // Remove invalid entries
       ministries = ministries.filter(
         (v) => v !== null && v !== undefined && v !== ""
       );
@@ -120,12 +120,11 @@ const MasterListPage = () => {
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  // Show ministries as their labels (supports array of IDs, objects, or string names)
+  // Render ministries with proper labels
   const renderMinistryLabels = (ministries) => {
     if (!ministries || ministries.length === 0) return "-";
     return ministries
       .map((val) => {
-        // If object with label/id/value
         if (typeof val === "object" && val !== null) {
           if (val.label) return val.label;
           if (val.value) {
@@ -139,7 +138,6 @@ const MasterListPage = () => {
             return found ? found.label : val.id;
           }
         }
-        // If number or string
         const found = MINISTRY_OPTIONS.find(
           (opt) => opt.value === val || opt.label === val
         );
@@ -148,7 +146,7 @@ const MasterListPage = () => {
       .join(", ");
   };
 
-  // --- MODERN/CONDENSED PAGINATION ---
+  // Modern condensed pagination rendering
   const renderPagination = () => {
     if (totalPages <= 1) return null;
 

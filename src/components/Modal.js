@@ -39,7 +39,6 @@ const modalVariants = {
 export default function Modal({ open, user, onClose, onSave }) {
   const [draft, setDraft] = useState(user);
   const [selectedMinistries, setSelectedMinistries] = useState([]);
-  // Family linking states
   const [families, setFamilies] = useState([]);
   const [familyQuery, setFamilyQuery] = useState("");
   const [familyId, setFamilyId] = useState(null);
@@ -58,24 +57,21 @@ export default function Modal({ open, user, onClose, onSave }) {
           ? m.value
           : typeof m === "object" && m.id
           ? m.id
-          : typeof m === "number"
-          ? m
-          : MINISTRY_OPTIONS.find((opt) => opt.label === m)?.value || m
+          : m
       );
     } else if (typeof user.ministries === "string") {
       parsed = user.ministries
         .split(",")
         .map((m) => {
           const num = parseInt(m, 10);
-          return isNaN(num)
-            ? MINISTRY_OPTIONS.find((opt) => opt.label === m.trim())?.value ||
-                m.trim()
-            : num;
+          return isNaN(num) ? m.trim() : num;
         })
         .filter(Boolean);
     }
     setSelectedMinistries(
-      MINISTRY_OPTIONS.filter((opt) => parsed.includes(opt.value))
+      MINISTRY_OPTIONS.filter(
+        (opt) => parsed.includes(opt.value) || parsed.includes(opt.label)
+      )
     );
 
     fetchFamilies();
@@ -141,11 +137,14 @@ export default function Modal({ open, user, onClose, onSave }) {
   const handleChange = (field, value) =>
     setDraft((prev) => ({ ...prev, [field]: value }));
 
-  // --- ON SAVE (CRITICAL SECTION) ---
+  // --- ON SAVE ---
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Always send ministries as an array of IDs
-    const ministries = selectedMinistries.map((m) => m.value);
+
+    const ministries =
+      selectedMinistries.length > 0
+        ? selectedMinistries.map((m) => m.value)
+        : user.ministries || [];
 
     const genderVal =
       draft.gender && draft.gender !== "" ? draft.gender : user.gender;
@@ -225,9 +224,9 @@ export default function Modal({ open, user, onClose, onSave }) {
                   <option value="elder">Elder</option>
                   <option value="visitor">Visitor</option>
                   <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
                 </select>
               </label>
-              {/* --- Add Gender Selector --- */}
               <label>
                 Gender
                 <select
@@ -241,7 +240,6 @@ export default function Modal({ open, user, onClose, onSave }) {
                   ))}
                 </select>
               </label>
-              {/* --- Add Active/Inactive Status Selector --- */}
               <label>
                 Status
                 <select
@@ -258,7 +256,6 @@ export default function Modal({ open, user, onClose, onSave }) {
                   <option value="false">Inactive</option>
                 </select>
               </label>
-              {/* --- End Active/Inactive Status Selector --- */}
               <label>
                 Ministries
                 <Select
@@ -270,7 +267,7 @@ export default function Modal({ open, user, onClose, onSave }) {
                 />
               </label>
 
-              {/* --- Household / Family Section (Autocomplete + Add) --- */}
+              {/* Household / Family Section */}
               <label>Household / Family</label>
               {!addingNewFamily ? (
                 <div className="family-autocomplete">
@@ -373,7 +370,6 @@ export default function Modal({ open, user, onClose, onSave }) {
                   </button>
                 </div>
               )}
-              {/* Show members of selected family */}
               {familyId && familyMembers.length > 0 && (
                 <div
                   style={{
