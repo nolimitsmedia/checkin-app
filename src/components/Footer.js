@@ -14,7 +14,7 @@ export default function Footer() {
         zIndex: -1,
       }}
     >
-      © {new Date().getFullYear()} No Limits Media LLC. All Rights Reserved.
+      © {new Date().getFullYear()} Mt Gilead FGIM. All Rights Reserved.
     </footer>
   );
 }
