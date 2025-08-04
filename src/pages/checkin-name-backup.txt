@@ -67,10 +67,7 @@ export default function CheckInName() {
       .catch(() => setEventCheckIns([]));
   }, [selectedEventId]);
 
-  // Normalize phone helper: removes all non-digits
-  const normalizePhone = (phone) => (phone ? phone.replace(/\D/g, "") : "");
-
-  // Search logic with phone normalization
+  // Search logic (unchanged except now triggers check-ins re-render)
   const handleSearch = async () => {
     const term = searchTerm.trim();
     setFilteredUsers([]);
@@ -108,20 +105,12 @@ export default function CheckInName() {
       return;
     }
 
-    const normalizedSearch = normalizePhone(term);
-
-    const anyMatch = users.filter((u) => {
-      const firstNameMatch = u.first_name.toLowerCase().includes(lowerTerm);
-      const lastNameMatch = u.last_name.toLowerCase().includes(lowerTerm);
-
-      const normalizedUserPhone = normalizePhone(u.phone);
-
-      const phoneMatch =
-        normalizedUserPhone.includes(normalizedSearch) && normalizedSearch;
-
-      return firstNameMatch || lastNameMatch || phoneMatch;
-    });
-
+    const anyMatch = users.filter(
+      (u) =>
+        u.first_name.toLowerCase().includes(lowerTerm) ||
+        u.last_name.toLowerCase().includes(lowerTerm) ||
+        (u.phone && u.phone.includes(lowerTerm))
+    );
     if (anyMatch.length > 0) {
       setFilteredUsers(anyMatch);
       setFamilyName("");

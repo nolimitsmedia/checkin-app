@@ -46,7 +46,7 @@ const ReportsMaster = () => {
         setEvents(eventRes.data);
         const elderRes = await api.get("/users/elders");
         setElders(elderRes.data);
-        const minRes = await api.get("/ministries");
+        const minRes = await api.get("/reports/ministries"); // updated route
         setMinistries(minRes.data);
 
         // Find special ministry IDs by name
@@ -95,11 +95,19 @@ const ReportsMaster = () => {
             }
             break;
           case "ministry-absent":
-            if (eventId)
-              res = await api.get(`/reports/ministry-absent/${eventId}`);
+            if (eventId) {
+              // ministryId is passed as query param now
+              let url = `/reports/ministry-absent/${eventId}`;
+              const params = ministryId ? { ministry_id: ministryId } : {};
+              res = await api.get(url, { params });
+            }
             break;
           case "elder":
-            if (elderId) res = await api.get(`/reports/elder/${elderId}`);
+            if (elderId) {
+              let url = `/reports/elder/${elderId}`;
+              if (eventId) url += `?event_id=${eventId}`;
+              res = await api.get(url);
+            }
             break;
           case "elder-absent":
             if (elderId && eventId)
@@ -211,7 +219,7 @@ const ReportsMaster = () => {
           </option>
           <option value="staff-attendance">Staff Attendance Report</option>
           <option value="ministry-attendance">
-            Other Ministry Attendance Report
+            Ministry Attendance Report
           </option>
           <option value="ministry-absent">Ministry Absent Report</option>
           <option value="elder">Elder Report</option>
@@ -246,15 +254,33 @@ const ReportsMaster = () => {
         )}
 
         {reportType === "ministry-absent" && (
-          <select value={eventId} onChange={(e) => setEventId(e.target.value)}>
-            <option value="">Select Event</option>
-            {events.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.title} ({new Date(e.event_date).toLocaleDateString("en-US")})
-              </option>
-            ))}
-          </select>
+          <>
+            <select
+              value={eventId}
+              onChange={(e) => setEventId(e.target.value)}
+            >
+              <option value="">Select Event</option>
+              {events.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title} (
+                  {new Date(e.event_date).toLocaleDateString("en-US")})
+                </option>
+              ))}
+            </select>
+            <select
+              value={ministryId}
+              onChange={(e) => setMinistryId(e.target.value)}
+            >
+              <option value="">Select Ministry</option>
+              {ministries.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </>
         )}
+
         {(reportType === "elder" || reportType === "elder-absent") && (
           <select value={elderId} onChange={(e) => setElderId(e.target.value)}>
             <option value="">Select Elder</option>
