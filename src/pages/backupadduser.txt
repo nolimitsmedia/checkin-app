@@ -171,7 +171,6 @@ function AddUser() {
             name="alt_phone"
             value={formData.alt_phone}
             onChange={handleInputChange}
-            placeholder="Optional"
           />
         </div>
         <div className="input-group">

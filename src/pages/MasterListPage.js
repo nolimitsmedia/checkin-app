@@ -39,7 +39,9 @@ const MasterListPage = () => {
         " " +
         (user.email ? user.email.toLowerCase() : "") +
         " " +
-        (user.phone ? user.phone.toLowerCase() : "")
+        (user.phone ? user.phone.toLowerCase() : "") +
+        " " +
+        (user.alt_phone ? user.alt_phone.toLowerCase() : "")
       ).includes(lower)
     );
     setFilteredUsers(filtered);
@@ -102,6 +104,8 @@ const MasterListPage = () => {
         active: updatedUser.active,
         avatar: updatedUser.avatar,
         family_id: updatedUser.family_id || null,
+        phone: updatedUser.phone || "", // primary phone
+        alt_phone: updatedUser.alt_phone || "", // alternate phone added here
       };
 
       await api.put(`/users/${updatedUser.id}`, payload);

@@ -70,7 +70,7 @@ export default function CheckInName() {
   // Normalize phone helper: removes all non-digits
   const normalizePhone = (phone) => (phone ? phone.replace(/\D/g, "") : "");
 
-  // Search logic with phone normalization
+  // Search logic with phone normalization, includes alt_phone now
   const handleSearch = async () => {
     const term = searchTerm.trim();
     setFilteredUsers([]);
@@ -115,11 +115,15 @@ export default function CheckInName() {
       const lastNameMatch = u.last_name.toLowerCase().includes(lowerTerm);
 
       const normalizedUserPhone = normalizePhone(u.phone);
+      const normalizedUserAltPhone = normalizePhone(u.alt_phone);
 
       const phoneMatch =
         normalizedUserPhone.includes(normalizedSearch) && normalizedSearch;
 
-      return firstNameMatch || lastNameMatch || phoneMatch;
+      const altPhoneMatch =
+        normalizedUserAltPhone.includes(normalizedSearch) && normalizedSearch;
+
+      return firstNameMatch || lastNameMatch || phoneMatch || altPhoneMatch;
     });
 
     if (anyMatch.length > 0) {

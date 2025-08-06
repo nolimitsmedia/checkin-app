@@ -232,13 +232,16 @@ export default function Modal({ open, user, onClose, onSave }) {
         draft.active === true || draft.active === "true" || draft.active === 1
           ? true
           : false,
+      phone: draft.phone, // primary phone as is
+      alt_phone: draft.alt_phone, // ** Added alternate phone field here **
     };
+
+    console.log("Submitting update payload:", payload); // Debug log
 
     onSave(payload);
     toast.success("✅ Changes saved!");
   };
 
-  // --- UI ---
   return (
     <AnimatePresence>
       {open && (
@@ -285,6 +288,27 @@ export default function Modal({ open, user, onClose, onSave }) {
                   required
                 />
               </label>
+
+              {/* Phone field */}
+              <label>
+                Phone
+                <input
+                  type="text"
+                  value={draft.phone || ""}
+                  onChange={(e) => handleChange("phone", e.target.value)}
+                />
+              </label>
+
+              {/* Alt Phone field */}
+              <label>
+                Alternate Phone
+                <input
+                  type="text"
+                  value={draft.alt_phone || ""}
+                  onChange={(e) => handleChange("alt_phone", e.target.value)}
+                />
+              </label>
+
               <label>
                 Role
                 <select
