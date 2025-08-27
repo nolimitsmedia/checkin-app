@@ -2,13 +2,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import api from "../api/api";
 import { CSVLink } from "react-csv";
 import { FaSortUp, FaSortDown } from "react-icons/fa";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import "./ReportsMaster.css";
 
-// Change these IDs/names to match your actual database records
 const OVERSEER_MINISTRY_NAME = "Overseers";
 const STAFF_MINISTRY_NAME = "Staff";
 
-// Helper: join first and last name
 const combineName = (row) =>
   [row.first_name, row.last_name].filter(Boolean).join(" ").trim() || "—";
 
@@ -37,7 +37,6 @@ const ReportsMaster = () => {
 
   const role = localStorage.getItem("adminRole");
 
-  // Fetch events, elders, ministries
   useEffect(() => {
     if (role !== "super_admin" && role !== "admin") return;
     const fetchOptions = async () => {
@@ -46,10 +45,9 @@ const ReportsMaster = () => {
         setEvents(eventRes.data);
         const elderRes = await api.get("/users/elders");
         setElders(elderRes.data);
-        const minRes = await api.get("/reports/ministries"); // updated route
+        const minRes = await api.get("/reports/ministries");
         setMinistries(minRes.data);
 
-        // Find special ministry IDs by name
         const overseerMinistry = minRes.data.find((m) =>
           m.name.toLowerCase().includes(OVERSEER_MINISTRY_NAME.toLowerCase())
         );
@@ -96,9 +94,8 @@ const ReportsMaster = () => {
             break;
           case "ministry-absent":
             if (eventId) {
-              // ministryId is passed as query param now
-              let url = `/reports/ministry-absent/${eventId}`;
               const params = ministryId ? { ministry_id: ministryId } : {};
+              let url = `/reports/ministry-absent/${eventId}`;
               res = await api.get(url, { params });
             }
             break;
@@ -114,6 +111,12 @@ const ReportsMaster = () => {
               res = await api.get(
                 `/reports/elder-absent/${elderId}/${eventId}`
               );
+            break;
+          case "roster":
+            if (ministryId) {
+              let url = `/reports/roster/${ministryId}`;
+              res = await api.get(url);
+            }
             break;
           default:
             return;
@@ -135,7 +138,6 @@ const ReportsMaster = () => {
     staffMinistryId,
   ]);
 
-  // Prepare visible columns
   const columns =
     data.length > 0
       ? [
@@ -149,7 +151,6 @@ const ReportsMaster = () => {
         ]
       : [];
 
-  // Prepare sorted/filtered data
   const processedData = useMemo(() => {
     let items = data.map((row) => ({
       ...row,
@@ -184,7 +185,6 @@ const ReportsMaster = () => {
     return sortConfig.direction === "asc" ? <FaSortUp /> : <FaSortDown />;
   };
 
-  // CSV export data, only visible columns
   const csvData =
     processedData.length > 0
       ? processedData.map((row) =>
@@ -201,7 +201,6 @@ const ReportsMaster = () => {
   return (
     <div className="reports-master">
       <h2>📋 Reports Center</h2>
-      {/* Filters */}
       <div className="report-filters">
         <select
           onChange={(e) => {
@@ -224,7 +223,22 @@ const ReportsMaster = () => {
           <option value="ministry-absent">Ministry Absent Report</option>
           <option value="elder">Elder Report</option>
           <option value="elder-absent">Elder Absent Report</option>
+          <option value="roster">Roster Report</option>
         </select>
+
+        {["ministry-attendance", "roster"].includes(reportType) && (
+          <select
+            value={ministryId}
+            onChange={(e) => setMinistryId(e.target.value)}
+          >
+            <option value="">Select Ministry</option>
+            {ministries.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         {(reportType === "overseer-attendance" ||
           reportType === "staff-attendance" ||
@@ -234,20 +248,6 @@ const ReportsMaster = () => {
             {events.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.title} ({new Date(e.event_date).toLocaleDateString("en-US")})
-              </option>
-            ))}
-          </select>
-        )}
-
-        {reportType === "ministry-attendance" && (
-          <select
-            value={ministryId}
-            onChange={(e) => setMinistryId(e.target.value)}
-          >
-            <option value="">Select Ministry</option>
-            {ministries.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
               </option>
             ))}
           </select>
@@ -315,6 +315,23 @@ const ReportsMaster = () => {
             >
               ⬇️ Export CSV
             </CSVLink>
+            <button
+              className="export-btn"
+              onClick={() => {
+                const doc = new jsPDF();
+                doc.text(`${reportType.toUpperCase()} Report`, 14, 10);
+                doc.autoTable({
+                  head: [columns.map((key) => key.toUpperCase())],
+                  body: processedData.map((row) =>
+                    columns.map((key) => row[key] || "—")
+                  ),
+                  startY: 20,
+                });
+                doc.save(`${reportType}-report.pdf`);
+              }}
+            >
+              🧾 Export PDF
+            </button>
             <div className="table-wrapper">
               <table className="responsive-table">
                 <thead>
