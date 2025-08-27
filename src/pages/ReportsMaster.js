@@ -3,7 +3,7 @@ import api from "../api/api";
 import { CSVLink } from "react-csv";
 import { FaSortUp, FaSortDown } from "react-icons/fa";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import "./ReportsMaster.css";
 
 const OVERSEER_MINISTRY_NAME = "Overseers";
@@ -320,7 +320,7 @@ const ReportsMaster = () => {
               onClick={() => {
                 const doc = new jsPDF();
                 doc.text(`${reportType.toUpperCase()} Report`, 14, 10);
-                doc.autoTable({
+                autoTable(doc, {
                   head: [columns.map((key) => key.toUpperCase())],
                   body: processedData.map((row) =>
                     columns.map((key) => row[key] || "—")
