@@ -1,12 +1,51 @@
+// client/src/pages/MasterListPage.js
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../api/api";
 import Modal, { MINISTRY_OPTIONS } from "../components/Modal";
 import "./MasterListPage.css";
 
-// Helper function for booleans and strings from backend
+// 🔔 Toasts
+import { Toaster, toast } from "react-hot-toast";
+
+/* --------------------------------- helpers -------------------------------- */
+
 function isUserActive(user) {
   return user.active === true || user.active === "true" || user.active === 1;
 }
+
+/** Accepts 2264, "2264", "user-2264", "elder-2264" and returns { id: 2264, role: "user"|"elder"|null } */
+function extractIdAndRole(rawId) {
+  if (rawId == null) return { id: NaN, role: null };
+  if (typeof rawId === "number") return { id: rawId, role: null };
+
+  const s = String(rawId);
+  const roleMatch = s.match(/^(elder|user|member|staff|volunteer)-/i);
+  const role = roleMatch ? roleMatch[1].toLowerCase() : null;
+
+  const idMatch = s.match(/(\d+)$/);
+  const id = idMatch ? Number(idMatch[1]) : Number(s);
+
+  return { id, role };
+}
+
+/** Normalize ministries into a unique array of numeric ids ([]) */
+function normalizeMinistries(input) {
+  const arr = Array.isArray(input) ? input : [];
+  const ids = arr
+    .map((m) => {
+      if (m && typeof m === "object") {
+        const v = m.value ?? m.id ?? m.label;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      }
+      const n = Number(m);
+      return Number.isFinite(n) ? n : null;
+    })
+    .filter((n) => n !== null);
+  return Array.from(new Set(ids));
+}
+
+/* ---------------------------------- page ---------------------------------- */
 
 const MasterListPage = () => {
   const [users, setUsers] = useState([]);
@@ -24,6 +63,7 @@ const MasterListPage = () => {
       setFilteredUsers(res.data);
     } catch (err) {
       console.error("Error fetching users:", err);
+      toast.error("Failed to fetch users.");
     }
   }, []);
 
@@ -52,17 +92,20 @@ const MasterListPage = () => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      const [role, idPart] =
-        typeof rawId === "string" && rawId.includes("-")
-          ? rawId.split("-")
-          : [null, rawId];
-      const id = parseInt(idPart, 10);
-      if (!id) throw new Error("Invalid ID format");
+      const { id, role } = extractIdAndRole(rawId);
+      if (!Number.isFinite(id)) throw new Error("Invalid ID format");
 
       await api.delete(`/users/${id}${role ? `?role=${role}` : ""}`);
+      toast.success("User deleted.");
       await fetchUsers();
     } catch (err) {
       console.error("❌ Delete error:", err.response?.data || err.message);
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Delete failed.";
+      toast.error(msg);
     }
   };
 
@@ -79,41 +122,45 @@ const MasterListPage = () => {
   // -- Safe and normalized payload for update
   const handleSave = async (updatedUser) => {
     try {
-      // Defensive: Always ensure ministries is an array (never undefined/null)
-      let ministries =
-        Array.isArray(updatedUser.ministries) && updatedUser.ministries.length
-          ? updatedUser.ministries
-          : [];
-      // Normalize react-select edge-cases: array of objects or strings
-      ministries = ministries.map((m) =>
-        typeof m === "object" && m !== null ? m.value || m.id || m.label : m
-      );
-      // Remove invalid entries
-      ministries = ministries.filter(
-        (v) => v !== null && v !== undefined && v !== ""
-      );
+      const { id, role } = extractIdAndRole(updatedUser.id);
+      if (!Number.isFinite(id)) {
+        toast.error("Invalid ID format.");
+        return;
+      }
 
       const payload = {
-        id: updatedUser.id,
-        first_name: updatedUser.first_name,
-        last_name: updatedUser.last_name,
-        email: updatedUser.email,
-        role: updatedUser.role || "member",
+        id, // numeric
+        first_name: updatedUser.first_name?.trim() || "",
+        last_name: updatedUser.last_name?.trim() || "",
+        email: updatedUser.email?.trim() || "",
+        role: (updatedUser.role || "member").toLowerCase(),
         gender: updatedUser.gender || null,
-        ministry_ids: ministries,
-        active: updatedUser.active,
-        avatar: updatedUser.avatar,
-        family_id: updatedUser.family_id || null,
-        phone: updatedUser.phone || "", // primary phone
-        alt_phone: updatedUser.alt_phone || "", // alternate phone added here
+        ministry_ids: normalizeMinistries(updatedUser.ministries),
+        active:
+          updatedUser.active === true ||
+          updatedUser.active === "true" ||
+          updatedUser.active === 1,
+        avatar: updatedUser.avatar || null,
+        family_id:
+          updatedUser.family_id === "" || updatedUser.family_id == null
+            ? null
+            : Number(updatedUser.family_id),
+        phone: updatedUser.phone?.trim() || "",
+        alt_phone: updatedUser.alt_phone?.trim() || "",
       };
 
-      await api.put(`/users/${updatedUser.id}`, payload);
+      await api.put(`/users/${id}${role ? `?role=${role}` : ""}`, payload);
+      toast.success("Saved successfully.");
       await fetchUsers();
       handleModalClose();
     } catch (err) {
-      console.error("Update error:", err?.response?.data || err.message || err);
-      alert("Error updating user. See console for details.");
+      const serverMsg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Update failed.";
+      console.error("Update error:", err?.response?.data || err);
+      toast.error(serverMsg);
     }
   };
 
@@ -124,30 +171,39 @@ const MasterListPage = () => {
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  // Render ministries with proper labels
+  // Render ministries with proper labels (supports ids, objects, or labels)
   const renderMinistryLabels = (ministries) => {
-    if (!ministries || ministries.length === 0) return "-";
-    return ministries
-      .map((val) => {
-        if (typeof val === "object" && val !== null) {
-          if (val.label) return val.label;
-          if (val.value) {
-            const found = MINISTRY_OPTIONS.find(
-              (opt) => opt.value === val.value
-            );
-            return found ? found.label : val.value;
-          }
-          if (val.id) {
-            const found = MINISTRY_OPTIONS.find((opt) => opt.value === val.id);
-            return found ? found.label : val.id;
-          }
+    if (!Array.isArray(ministries) || ministries.length === 0) return "-";
+
+    const toLabel = (val) => {
+      if (val && typeof val === "object") {
+        const v = val.value ?? val.id ?? val.label;
+        if (val.label) return String(val.label);
+
+        const n = Number(v);
+        if (Number.isFinite(n)) {
+          const found = MINISTRY_OPTIONS.find((opt) => Number(opt.value) === n);
+          return found?.label ?? String(v);
         }
         const found = MINISTRY_OPTIONS.find(
-          (opt) => opt.value === val || opt.label === val
+          (opt) => String(opt.value) === String(v) || opt.label === String(v)
         );
-        return found ? found.label : val;
-      })
-      .join(", ");
+        return found?.label ?? String(v);
+      }
+
+      const n = Number(val);
+      if (Number.isFinite(n)) {
+        const found = MINISTRY_OPTIONS.find((opt) => Number(opt.value) === n);
+        return found?.label ?? String(n);
+      }
+
+      const found = MINISTRY_OPTIONS.find(
+        (opt) => String(opt.value) === String(val) || opt.label === String(val)
+      );
+      return found?.label ?? String(val);
+    };
+
+    return ministries.map(toLabel).join(", ");
   };
 
   // Modern condensed pagination rendering
@@ -228,6 +284,41 @@ const MasterListPage = () => {
 
   return (
     <div className="masterlist-container">
+      {/* Toast portal */}
+      <Toaster
+        position="top-center"
+        containerClassName="nlm-toast-container"
+        gutter={12}
+        toastOptions={{
+          duration: 3500,
+          style: {
+            // base size + responsiveness
+            fontSize: "clamp(14px, 2vw, 18px)",
+            padding: "16px 20px",
+            borderRadius: "14px",
+            maxWidth: "min(92vw, 560px)",
+            boxShadow:
+              "0 10px 25px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.08)",
+          },
+          success: {
+            iconTheme: { primary: "#1b8e3e", secondary: "#fff" },
+            style: {
+              background: "#e7f7ee",
+              color: "#0f5132",
+              border: "1px solid #a3e6c1",
+            },
+          },
+          error: {
+            iconTheme: { primary: "#a94442", secondary: "#fff" },
+            style: {
+              background: "#fdecea",
+              color: "#842029",
+              border: "1px solid #f5c2c7",
+            },
+          },
+        }}
+      />
+
       <div className="top-bar">
         <h2>📋 Master List</h2>
       </div>

@@ -38,6 +38,14 @@ const ReportsMaster = () => {
   const role = localStorage.getItem("adminRole");
 
   useEffect(() => {
+    if (reportType === "roster") {
+      setSortConfig({ key: "last_name", direction: "asc" });
+    } else {
+      setSortConfig({ key: null, direction: null });
+    }
+  }, [reportType]);
+
+  useEffect(() => {
     if (role !== "super_admin" && role !== "admin") return;
     const fetchOptions = async () => {
       try {
@@ -156,6 +164,11 @@ const ReportsMaster = () => {
       ...row,
       name: combineName(row),
     }));
+
+    if (reportType === "roster") {
+      items.sort((a, b) => a.last_name?.localeCompare(b.last_name));
+    }
+
     if (sortConfig.key) {
       items.sort((a, b) => {
         const valA = a[sortConfig.key];

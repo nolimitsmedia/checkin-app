@@ -1,3 +1,4 @@
+// src/pages/EventListPage.js
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/api";
@@ -20,7 +21,7 @@ const EventListPage = () => {
 
   useEffect(() => {
     const filtered = events.filter((event) =>
-      event.title.toLowerCase().includes(searchTerm.toLowerCase())
+      (event.title || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredEvents(filtered);
     setCurrentPage(1); // Reset to first page when search changes
@@ -29,7 +30,7 @@ const EventListPage = () => {
   const fetchEvents = async () => {
     try {
       const res = await api.get("/events");
-      setEvents(res.data);
+      setEvents(res.data || []);
     } catch (err) {
       console.error("Failed to fetch events:", err);
     }
@@ -39,18 +40,32 @@ const EventListPage = () => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
     try {
       await api.delete(`/events/${id}`);
-      setEvents(events.filter((e) => e.id !== id));
+      setEvents((prev) => prev.filter((e) => e.id !== id));
     } catch (err) {
       console.error("Delete failed:", err);
     }
   };
 
+  const normalizeDateOnly = (val) => {
+    if (!val) return "";
+    // Return YYYY-MM-DD if present, regardless of whether there's a time
+    return String(val).slice(0, 10);
+  };
+
+  const normalizeTimeForInput = (val) => {
+    if (!val) return "";
+    // Expect "HH:MM[:SS]" -> keep HH:MM
+    const s = String(val);
+    const m = s.match(/^(\d{2}:\d{2})/);
+    return m ? m[1] : s;
+  };
+
   const handleEditClick = (event) => {
     setEditingEvent({
       id: event.id,
-      title: event.title,
-      event_date: event.event_date,
-      event_time: event.event_time || "",
+      title: event.title || "",
+      event_date: normalizeDateOnly(event.event_date),
+      event_time: normalizeTimeForInput(event.event_time),
       location: event.location || "",
       description: event.description || "",
     });
@@ -66,13 +81,16 @@ const EventListPage = () => {
 
     const updatedEvent = {
       ...editingEvent,
-      event_date: editingEvent.event_date.split("T")[0],
+      // Ensure date stays date-only on submit
+      event_date: normalizeDateOnly(editingEvent.event_date),
+      // Leave time as "HH:MM" which your backend/DB TIME should handle
+      event_time: normalizeTimeForInput(editingEvent.event_time),
     };
 
     try {
       await api.put(`/events/${updatedEvent.id}`, updatedEvent);
-      setEvents(
-        events.map((e) => (e.id === updatedEvent.id ? updatedEvent : e))
+      setEvents((prev) =>
+        prev.map((e) => (e.id === updatedEvent.id ? updatedEvent : e))
       );
       setEditingEvent(null);
     } catch (err) {
@@ -80,6 +98,7 @@ const EventListPage = () => {
     }
   };
 
+  // (Optional) only used if you wire this into EventTable; EventTable already formats time internally.
   const formatTime = (time) => {
     if (!time) return "--";
     return new Date(`1970-01-01T${time}`).toLocaleTimeString([], {
@@ -130,25 +149,24 @@ const EventListPage = () => {
                 onChange={handleEditChange}
                 required
               />
+
+              {/* DATE: keep as plain string YYYY-MM-DD, no Date/ISO conversion */}
               <input
                 type="date"
                 name="event_date"
-                value={
-                  editingEvent.event_date
-                    ? new Date(editingEvent.event_date)
-                        .toISOString()
-                        .split("T")[0]
-                    : ""
-                }
+                value={normalizeDateOnly(editingEvent.event_date)}
                 onChange={handleEditChange}
                 required
               />
+
+              {/* TIME: normalized to HH:MM so it fits the input */}
               <input
                 type="time"
                 name="event_time"
-                value={editingEvent.event_time}
+                value={normalizeTimeForInput(editingEvent.event_time)}
                 onChange={handleEditChange}
               />
+
               <input
                 type="text"
                 name="location"

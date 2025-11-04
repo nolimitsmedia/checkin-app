@@ -1,7 +1,27 @@
+// src/components/EventTable.js
 import React from "react";
 import "./TableStyles.css"; // Or your preferred styles
 
 const EventTable = ({ events, onEdit, onDelete }) => {
+  // Safely format a DATE-ONLY value without introducing timezone shifts.
+  const formatDate = (dateVal) => {
+    if (!dateVal) return "--";
+    const str = String(dateVal);
+
+    // If it's exactly "YYYY-MM-DD", render manually -> "MM/DD/YYYY"
+    const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) {
+      const [, y, mo, d] = m;
+      return `${mo}/${d}/${y}`;
+    }
+
+    // Otherwise (has a time component), let the browser format it.
+    const dObj = new Date(str);
+    if (!isNaN(dObj)) return dObj.toLocaleDateString();
+    return str; // fallback as-is if unparsable
+  };
+
+  // Time is fine to parse against an arbitrary date.
   const formatTime = (time) => {
     if (!time) return "--";
     return new Date(`1970-01-01T${time}`).toLocaleTimeString([], {
@@ -34,11 +54,7 @@ const EventTable = ({ events, onEdit, onDelete }) => {
             events.map((event) => (
               <tr key={event.id}>
                 <td data-label="Title">{event.title}</td>
-                <td data-label="Date">
-                  {event.event_date
-                    ? new Date(event.event_date).toLocaleDateString()
-                    : "--"}
-                </td>
+                <td data-label="Date">{formatDate(event.event_date)}</td>
                 <td data-label="Time">{formatTime(event.event_time)}</td>
                 <td data-label="Location">{event.location || "--"}</td>
                 <td data-label="Description">{event.description || "--"}</td>

@@ -151,3 +151,28 @@ tr:hover {
 .gender {
   text-transform: capitalize;
 }
+
+/*  */
+/* Force the react-hot-toast container to the page center */
+.nlm-toast-container {
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  padding: 0 !important;
+  z-index: 9999; /* above modals if needed */
+}
+
+/* Make sure each toast looks good and is clickable */
+.nlm-toast-container > * {
+  pointer-events: auto;
+}
+
+/* Optional: slightly larger on wider screens */
+@media (min-width: 1024px) {
+  .nlm-toast-container .react-hot-toast {
+    font-size: 18px;
+    padding: 18px 22px;
+  }
+}

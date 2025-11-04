@@ -71,7 +71,7 @@ function Login() {
         </div>
         <button onClick={handleLogin}>Login</button>
         {error && <p className="error">{error}</p>}
-        <p className="footer">© 2025 No Limits Media</p>
+        <p className="footer">© 2025 Mt Gilead FGIM. All Rights Reserved.</p>
       </div>
     </div>
   );
